@@ -4,13 +4,43 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title><i><b>IRYS</b></i> Incubator</title>
-  
-  <!-- Libraries -->
+
+  <!-- Particles & Confetti -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/particles.js/2.0.0/particles.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
+  <!-- Ethers.js (primary + fallback) -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <script>
+    (function ensureEthersLoaded(){
+      if (window.ethers) return;
+      var s = document.createElement('script');
+      s.src = 'https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js';
+      s.onload = function(){ console.log('Fallback ethers loaded'); };
+      s.onerror = function(){ console.error('Failed to load ethers from both CDNs'); };
+      document.head.appendChild(s);
+    })();
+  </script>
+
+  <!-- Web3Modal (provider picker) + WalletConnect + Coinbase Wallet (UMD builds) -->
+  <link rel="stylesheet" href="https://unpkg.com/web3modal/dist/index.css" />
+  <script src="https://unpkg.com/web3modal/dist/index.js"></script>
+  <script src="https://unpkg.com/@walletconnect/web3-provider/dist/umd/index.min.js"></script>
+  <script src="https://unpkg.com/@coinbase/wallet-sdk/dist/CoinbaseWalletSDK.umd.min.js"></script>
+
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Oswald:wght@700&display=swap');
+
+    :root{
+      --accent: #00fff0;
+      --accent2: #ff4fff;
+      --bg-dark: #111;
+      --card: rgba(0,0,0,0.7);
+      --border: #00fff0;
+      --glow: rgba(0,255,255,0.3);
+    }
+
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -24,7 +54,7 @@
 
     /* Particle background */
     #particles-js {
-      position: absolute;
+      position: fixed;
       width: 100%;
       height: 100%;
       top: 0; left: 0;
@@ -36,20 +66,35 @@
       padding: 50px 20px;
       background: rgba(0, 0, 0, 0.5);
       backdrop-filter: blur(6px);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
     }
 
     h1 {
       font-family: 'Orbitron', sans-serif;
       font-size: 3.5em;
       margin: 0;
-      color: #00fff0;
-      text-shadow: 0 0 15px #00fff0, 0 0 30px #0ff;
+      color: var(--accent);
+      text-shadow: 0 0 15px var(--accent), 0 0 30px #0ff;
       animation: pulseGlow 2s infinite alternate;
     }
 
     @keyframes pulseGlow {
-      from { text-shadow: 0 0 10px #00fff0; }
+      from { text-shadow: 0 0 10px var(--accent); }
       to   { text-shadow: 0 0 25px #0ff; }
+    }
+
+    #wallet-bar {
+      margin-top: 18px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .hint {
+      opacity: 0.8;
+      font-size: 0.9em;
     }
 
     main {
@@ -67,15 +112,16 @@
       font-size: 2em;
       text-align: center;
       margin-bottom: 20px;
-      color: #ff4fff;
-      text-shadow: 0 0 10px #ff4fff;
+      color: var(--accent2);
+      text-shadow: 0 0 10px var(--accent2);
     }
 
     #submit-section {
       background: rgba(0, 0, 0, 0.7);
       padding: 40px;
       border-radius: 15px;
-      box-shadow: 0 0 20px rgba(0,255,255,0.3);
+      box-shadow: 0 0 20px var(--glow);
+      border: 1px solid rgba(0,255,255,0.15);
     }
 
     input, textarea, select {
@@ -83,25 +129,31 @@
       width: 100%;
       margin: 15px auto;
       padding: 15px;
-      border: 1px solid #00fff0;
+      border: 1px solid var(--accent);
       border-radius: 10px;
-      background: #111;
+      background: var(--bg-dark);
       color: #fff;
       font-size: 1em;
       transition: all 0.3s ease;
+      outline: none;
+      appearance: none;
+    }
+
+    select option {
+      background: #000;
+      color: #fff;
     }
 
     input:focus, textarea:focus, select:focus {
-      outline: none;
-      border-color: #ff4fff;
-      box-shadow: 0 0 10px #ff4fff;
+      border-color: var(--accent2);
+      box-shadow: 0 0 10px var(--accent2);
     }
 
-    button {
+    .btn {
       display: inline-block;
       margin: 10px;
       padding: 10px 20px;
-      background: linear-gradient(45deg, #00fff0, #ff4fff);
+      background: linear-gradient(45deg, var(--accent), var(--accent2));
       border: none;
       border-radius: 50px;
       color: white;
@@ -111,18 +163,25 @@
       transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
 
-    button:hover {
+    .btn:hover {
       transform: scale(1.05);
-      box-shadow: 0 0 20px #00fff0;
+      box-shadow: 0 0 20px var(--accent);
+    }
+
+    .btn.secondary{
+      background: transparent;
+      border: 1px solid var(--accent);
     }
 
     .card {
-      background: rgba(0,0,0,0.7);
-      border: 1px solid #00fff0;
+      background: var(--card);
+      border: 1px solid var(--border);
       border-radius: 15px;
       padding: 20px;
-      margin: 15px;
+      margin: 15px 0;
       transition: 0.3s;
+      position: relative;
+      overflow: hidden;
     }
 
     .card:hover {
@@ -131,10 +190,43 @@
     }
 
     .timer {
-      color: #ff4fff;
+      color: var(--accent2);
       font-size: 0.9em;
       margin-top: 5px;
     }
+
+    .pill {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.06);
+      font-size: .85em;
+      margin-right: 8px;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .vote-btn {
+      padding: 8px 16px;
+      border-radius: 30px;
+      border: 1px solid var(--accent2);
+      background: transparent;
+      color: #fff;
+      cursor: pointer;
+      font-family: 'Orbitron', sans-serif;
+      transition: .2s ease;
+    }
+
+    .vote-btn:hover { box-shadow: 0 0 14px var(--accent2); transform: translateY(-1px); }
+    .vote-btn[disabled]{ opacity: .45; cursor: not-allowed; }
 
     footer {
       text-align: center;
@@ -145,21 +237,26 @@
     }
 
     footer a {
-      color: #00fff0;
+      color: var(--accent);
       text-decoration: none;
     }
     footer a:hover {
-      color: #ff4fff;
+      color: var(--accent2);
     }
   </style>
 </head>
 <body>
   <div id="particles-js"></div>
-  
+
   <header>
     <h1><i><b>IRYS</b></i> Incubator</h1>
-    <button id="connect-wallet">Connect Wallet</button>
-    <div id="wallet-info"></div>
+
+    <div id="wallet-bar">
+      <button id="connect-wallet" class="btn">Connect Wallet</button>
+      <button id="disconnect-wallet" class="btn secondary" style="display:none;">Disconnect</button>
+      <div id="wallet-info" class="pill">Not connected</div>
+      <div class="hint">MetaMask / Coinbase Wallet / WalletConnect</div>
+    </div>
   </header>
 
   <main>
@@ -169,13 +266,22 @@
       <select id="category" required>
         <option value="" disabled selected>Select a Category</option>
         <option value="Consumer Apps">Consumer Apps</option>
-        <option value="DeFi">DeFi</option>
+        <option value="DeFi / Fintech">DeFi / Fintech</option>
         <option value="Gaming">Gaming</option>
-        <option value="AI">AI</option>
+        <option value="AI / Machine Learning">AI / Machine Learning</option>
+        <option value="Healthcare / MedTech">Healthcare / MedTech</option>
+        <option value="Education / EdTech">Education / EdTech</option>
+        <option value="E-commerce / Retail">E-commerce / Retail</option>
+        <option value="Social / Networking">Social / Networking</option>
+        <option value="Productivity / Utility">Productivity / Utility</option>
+        <option value="Entertainment / Media">Entertainment / Media</option>
+        <option value="IoT / Smart Devices">IoT / Smart Devices</option>
+        <option value="Environment / Sustainability">Environment / Sustainability</option>
+        <option value="Security / Privacy">Security / Privacy</option>
       </select>
       <input type="text" id="title" placeholder="Project Title" required>
       <textarea id="description" placeholder="Project Description" required></textarea>
-      <button id="submit">Submit Without Boost</button>
+      <button id="submit" class="btn">Submit</button>
     </section>
 
     <section>
@@ -192,7 +298,7 @@
   <footer>Developed by <a href="https://x.com/boyykennn">Kennboyyy</a></footer>
 
   <script>
-    // Background particles
+    /* ===================== Background particles ===================== */
     particlesJS("particles-js", {
       particles: {
         number: { value: 120 },
@@ -205,13 +311,168 @@
       }
     });
 
+    /* ===================== Utils ===================== */
+    function shortAddr(addr){ return addr ? addr.slice(0,6) + "..." + addr.slice(-4) : ""; }
+
+    /* ===================== Web3Modal setup (multiple wallets) ===================== */
+    // If you have your own RPCs, replace below. These are public endpoints for Mainnet.
+    const RPC_MAP = {
+      1: "https://cloudflare-eth.com"
+    };
+
+    // Replace with your Infura/Alchemy key if available (better reliability)
+    const INFURA_ID = ""; // optional
+
+    let web3Modal = null;
+    let externalProvider = null;        // raw provider returned by web3modal
+    let ethersProvider = null;          // ethers.js provider
+    let signer = null;
     let walletAddress = null;
 
-    document.getElementById("connect-wallet").addEventListener("click", () => {
-      walletAddress = "TestWallet-" + Math.floor(Math.random() * 1000);
-      document.getElementById("wallet-info").innerText = "Connected: " + walletAddress;
-    });
+    const providerOptions = {
+      walletconnect: {
+        package: window.WalletConnectProvider.default,
+        options: {
+          rpc: RPC_MAP,
+          bridge: "https://bridge.walletconnect.org",
+          qrcode: true
+        }
+      },
+      coinbasewallet: {
+        package: window.CoinbaseWalletSDK,
+        options: {
+          appName: "IRYS Incubator",
+          rpc: RPC_MAP[1],
+          darkMode: true
+        }
+      }
+      // Injected wallets (MetaMask, Brave, Coinbase ext) are handled by Web3Modal automatically.
+    };
 
+    function initWeb3Modal() {
+      try {
+        web3Modal = new window.Web3Modal.default({
+          cacheProvider: false,           // don't auto-connect silently
+          providerOptions,
+          disableInjectedProvider: false  // allow injected (MetaMask etc.)
+        });
+      } catch (e) {
+        console.error("Web3Modal init failed:", e);
+        alert("Failed to initialize wallet modal. Check ad-blockers and refresh.");
+      }
+    }
+
+    initWeb3Modal();
+
+    /* ===================== Wallet connect / disconnect ===================== */
+    const connectBtn = document.getElementById("connect-wallet");
+    const disconnectBtn = document.getElementById("disconnect-wallet");
+    const walletInfo = document.getElementById("wallet-info");
+
+    async function connectWallet(){
+      // Ensure ethers is loaded
+      if (!window.ethers) {
+        alert("Failed to load ethers.js. Please disable ad-blockers and refresh.");
+        return;
+      }
+      if (!web3Modal) {
+        initWeb3Modal();
+        if (!web3Modal) return;
+      }
+
+      try {
+        // Open modal (user can select MetaMask / Coinbase / WalletConnect)
+        externalProvider = await web3Modal.connect();
+
+        // Wrap with ethers
+        ethersProvider = new ethers.providers.Web3Provider(externalProvider, "any");
+        signer = ethersProvider.getSigner();
+        walletAddress = await signer.getAddress();
+
+        walletInfo.textContent = "Connected: " + shortAddr(walletAddress);
+        connectBtn.style.display = "none";
+        disconnectBtn.style.display = "inline-block";
+
+        // Clean listeners to avoid duplicates
+        if (externalProvider.removeAllListeners) {
+          try { externalProvider.removeAllListeners("accountsChanged"); } catch(e){}
+          try { externalProvider.removeAllListeners("chainChanged"); } catch(e){}
+          try { externalProvider.removeAllListeners("disconnect"); } catch(e){}
+        }
+
+        // Re-bind listeners
+        if (externalProvider.on) {
+          externalProvider.on("accountsChanged", async (accs) => {
+            if (!accs || accs.length === 0) {
+              doDisconnect();
+            } else {
+              walletAddress = ethers.utils.getAddress(accs[0]);
+              walletInfo.textContent = "Connected: " + shortAddr(walletAddress);
+              // Recreate signer (some providers require it)
+              signer = ethersProvider.getSigner();
+            }
+          });
+
+          externalProvider.on("chainChanged", async (_chainId) => {
+            // Recreate provider & signer on chain change (ethers best-practice)
+            ethersProvider = new ethers.providers.Web3Provider(externalProvider, "any");
+            signer = ethersProvider.getSigner();
+          });
+
+          externalProvider.on("disconnect", (code, reason) => {
+            console.warn("Provider disconnect:", code, reason);
+            doDisconnect();
+          });
+        }
+
+        // Remember last (display hint only)
+        localStorage.setItem("lastWallet", walletAddress);
+        console.log("✅ Connected:", walletAddress);
+
+      } catch (err) {
+        console.error("❌ Wallet connection error:", err);
+        const msg = (err && err.message) ? err.message : String(err);
+        if (/User closed modal|Modal closed/i.test(msg)) {
+          // user just closed the modal—no alert needed
+          return;
+        }
+        if (/User rejected|denied|Rejected by user/i.test(msg)) {
+          alert("You cancelled the connection request.");
+        } else {
+          alert("Wallet connection failed: " + msg);
+        }
+      }
+    }
+
+    async function doDisconnect(){
+      try {
+        if (externalProvider && externalProvider.disconnect && typeof externalProvider.disconnect === "function") {
+          // Some providers (WalletConnect) support a proper disconnect
+          await externalProvider.disconnect();
+        }
+      } catch(e) {
+        console.warn("Provider disconnect threw:", e);
+      }
+      externalProvider = null;
+      ethersProvider = null;
+      signer = null;
+      walletAddress = null;
+      walletInfo.textContent = "Not connected";
+      connectBtn.style.display = "inline-block";
+      disconnectBtn.style.display = "none";
+      localStorage.removeItem("lastWallet");
+    }
+
+    connectBtn.addEventListener("click", connectWallet);
+    disconnectBtn.addEventListener("click", doDisconnect);
+
+    // Show previously used address hint
+    const last = localStorage.getItem('lastWallet');
+    if (last) {
+      walletInfo.textContent = "Last: " + shortAddr(last) + " (click Connect)";
+    }
+
+    /* ===================== Suggestion submit ===================== */
     document.getElementById("submit").addEventListener("click", () => {
       const twitter = document.getElementById("twitter").value.trim();
       const category = document.getElementById("category").value;
@@ -230,7 +491,8 @@
         timestamp: Date.now(),
         votes: 0,
         status: "pending", // pending or validated
-        expiry: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 days
+        expiry: Date.now() + (7 * 24 * 60 * 60 * 1000), // 7 days
+        voters: [] // wallet addresses that already voted (frontend enforcement)
       };
 
       const suggestions = JSON.parse(localStorage.getItem("suggestions") || "[]");
@@ -239,37 +501,70 @@
       displaySuggestions();
       confetti();
       alert("Suggestion submitted successfully!");
-      
+
       document.getElementById("twitter").value = "";
       document.getElementById("category").value = "";
       document.getElementById("title").value = "";
       document.getElementById("description").value = "";
     });
 
-    function voteSuggestion(id) {
+    /* ===================== Voting: One wallet = one vote (front-end) ===================== */
+    async function voteSuggestion(id) {
+      if (!walletAddress || !signer) {
+        alert("Please connect your wallet to vote.");
+        return;
+      }
+
       let suggestions = JSON.parse(localStorage.getItem("suggestions") || "[]");
       let suggestion = suggestions.find(s => s.id === id);
-      if (suggestion) {
-        suggestion.votes += 1;
-        if (suggestion.votes >= 20 && suggestion.status === "pending") {
-          suggestion.status = "validated";
-          suggestion.expiry = Date.now() + (4 * 24 * 60 * 60 * 1000); // 4 days
-          confetti();
-          alert(`🎉 "${suggestion.title}" has been validated!`);
-        }
-        localStorage.setItem("suggestions", JSON.stringify(suggestions));
-        displaySuggestions();
+      if (!suggestion) return;
+
+      const voterList = Array.isArray(suggestion.voters) ? suggestion.voters : [];
+      const hasVoted = voterList.some(addr => addr.toLowerCase() === walletAddress.toLowerCase());
+      if (hasVoted) {
+        alert("You have already voted on this suggestion with this wallet.");
+        return;
       }
+
+      // Ask user to sign a message (gasless) – proves control of wallet (optional but good UX)
+      try {
+        const message =
+`IRYS Incubator Vote
+Suggestion: ${suggestion.title}
+ID: ${suggestion.id}
+Voter: ${walletAddress}
+Time: ${new Date().toISOString()}`;
+        await signer.signMessage(message);
+      } catch (e) {
+        console.warn("Message signing cancelled or failed:", e);
+        alert("Vote cancelled.");
+        return;
+      }
+
+      suggestion.votes += 1;
+      voterList.push(walletAddress);
+      suggestion.voters = voterList;
+
+      if (suggestion.votes >= 20 && suggestion.status === "pending") {
+        suggestion.status = "validated";
+        suggestion.expiry = Date.now() + (4 * 24 * 60 * 60 * 1000); // 4 days
+        confetti();
+        alert(`🎉 "${suggestion.title}" has been validated!`);
+      }
+
+      localStorage.setItem("suggestions", JSON.stringify(suggestions));
+      displaySuggestions();
     }
 
+    /* ===================== Render / timers ===================== */
     function displaySuggestions() {
       let suggestions = JSON.parse(localStorage.getItem("suggestions") || "[]");
       const now = Date.now();
 
-      // Filter expired ones
+      // Filter out expired suggestions
       suggestions = suggestions.filter(s => s.expiry > now);
 
-      // Save back
+      // Save back (cleanup)
       localStorage.setItem("suggestions", JSON.stringify(suggestions));
 
       const pendingContainer = document.getElementById("suggestions-list");
@@ -277,20 +572,32 @@
       pendingContainer.innerHTML = "";
       validatedContainer.innerHTML = "";
 
+      // Sort by votes desc
+      suggestions.sort((a,b) => (b.votes||0) - (a.votes||0));
+
       suggestions.forEach(s => {
         const remaining = Math.max(0, s.expiry - now);
         const days = Math.floor(remaining / (1000 * 60 * 60 * 24));
         const hours = Math.floor((remaining / (1000 * 60 * 60)) % 24);
+
+        const alreadyVoted = (Array.isArray(s.voters) ? s.voters : [])
+          .some(addr => walletAddress && addr.toLowerCase() === walletAddress.toLowerCase());
 
         const card = document.createElement("div");
         card.className = "card";
         card.innerHTML = `
           <h3>${s.title}</h3>
           <p>${s.description}</p>
-          <p><b>${s.category}</b> | By ${s.twitter}</p>
-          <p>Votes: ${s.votes}</p>
-          <div class="timer">⏳ ${days}d ${hours}h remaining</div>
-          <button onclick="voteSuggestion('${s.id}')">Vote</button>
+          <p><span class="pill">${s.category}</span> <span class="pill">By ${s.twitter}</span></p>
+          <div class="row">
+            <div><b>Votes:</b> ${s.votes}</div>
+            <div class="timer">⏳ ${days}d ${hours}h remaining</div>
+          </div>
+          <div class="row" style="margin-top:14px;">
+            <button class="vote-btn" ${alreadyVoted ? 'disabled' : ''} onclick="voteSuggestion('${s.id}')">
+              ${alreadyVoted ? 'Voted' : 'Vote'}
+            </button>
+          </div>
         `;
 
         if (s.status === "pending") {
