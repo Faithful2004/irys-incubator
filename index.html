@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title><i><b>IRYS</b></i> Incubator</title>
+  
+  <!-- Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/particles.js/2.0.0/particles.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Oswald:wght@700&display=swap');
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at top, #001f29, #000);
+      font-family: 'Oswald', sans-serif;
+      color: white;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* Particle background */
+    #particles-js {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0; left: 0;
+      z-index: -1;
+    }
+
+    header {
+      text-align: center;
+      padding: 50px 20px;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(6px);
+    }
+
+    h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 3.5em;
+      margin: 0;
+      color: #00fff0;
+      text-shadow: 0 0 15px #00fff0, 0 0 30px #0ff;
+      animation: pulseGlow 2s infinite alternate;
+    }
+
+    @keyframes pulseGlow {
+      from { text-shadow: 0 0 10px #00fff0; }
+      to   { text-shadow: 0 0 25px #0ff; }
+    }
+
+    main {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 30px;
+    }
+
+    section {
+      margin-bottom: 60px;
+    }
+
+    h2 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2em;
+      text-align: center;
+      margin-bottom: 20px;
+      color: #ff4fff;
+      text-shadow: 0 0 10px #ff4fff;
+    }
+
+    #submit-section {
+      background: rgba(0, 0, 0, 0.7);
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(0,255,255,0.3);
+    }
+
+    input, textarea, select {
+      display: block;
+      width: 100%;
+      margin: 15px auto;
+      padding: 15px;
+      border: 1px solid #00fff0;
+      border-radius: 10px;
+      background: #111;
+      color: #fff;
+      font-size: 1em;
+      transition: all 0.3s ease;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: #ff4fff;
+      box-shadow: 0 0 10px #ff4fff;
+    }
+
+    button {
+      display: inline-block;
+      margin: 10px;
+      padding: 10px 20px;
+      background: linear-gradient(45deg, #00fff0, #ff4fff);
+      border: none;
+      border-radius: 50px;
+      color: white;
+      font-size: 1em;
+      cursor: pointer;
+      font-family: 'Orbitron', sans-serif;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px #00fff0;
+    }
+
+    .card {
+      background: rgba(0,0,0,0.7);
+      border: 1px solid #00fff0;
+      border-radius: 15px;
+      padding: 20px;
+      margin: 15px;
+      transition: 0.3s;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 0 20px #0ff;
+    }
+
+    .timer {
+      color: #ff4fff;
+      font-size: 0.9em;
+      margin-top: 5px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 0.9em;
+      background: rgba(0,0,0,0.8);
+      border-top: 1px solid #222;
+    }
+
+    footer a {
+      color: #00fff0;
+      text-decoration: none;
+    }
+    footer a:hover {
+      color: #ff4fff;
+    }
+  </style>
+</head>
+<body>
+  <div id="particles-js"></div>
+  
+  <header>
+    <h1><i><b>IRYS</b></i> Incubator</h1>
+    <button id="connect-wallet">Connect Wallet</button>
+    <div id="wallet-info"></div>
+  </header>
+
+  <main>
+    <section id="submit-section">
+      <h2>Submit Your Project Suggestion</h2>
+      <input type="text" id="twitter" placeholder="@username" required>
+      <select id="category" required>
+        <option value="" disabled selected>Select a Category</option>
+        <option value="Consumer Apps">Consumer Apps</option>
+        <option value="DeFi">DeFi</option>
+        <option value="Gaming">Gaming</option>
+        <option value="AI">AI</option>
+      </select>
+      <input type="text" id="title" placeholder="Project Title" required>
+      <textarea id="description" placeholder="Project Description" required></textarea>
+      <button id="submit">Submit Without Boost</button>
+    </section>
+
+    <section>
+      <h2>Community Suggestions</h2>
+      <div id="suggestions-list"></div>
+    </section>
+
+    <section>
+      <h2>Community Validated Suggestions</h2>
+      <div id="validated-list"></div>
+    </section>
+  </main>
+
+  <footer>Developed by <a href="https://x.com/boyykennn">Kennboyyy</a></footer>
+
+  <script>
+    // Background particles
+    particlesJS("particles-js", {
+      particles: {
+        number: { value: 120 },
+        color: { value: "#00fff0" },
+        shape: { type: "circle" },
+        opacity: { value: 0.4 },
+        size: { value: 3 },
+        line_linked: { enable: true, color: "#ff4fff" },
+        move: { enable: true, speed: 1 }
+      }
+    });
+
+    let walletAddress = null;
+
+    document.getElementById("connect-wallet").addEventListener("click", () => {
+      walletAddress = "TestWallet-" + Math.floor(Math.random() * 1000);
+      document.getElementById("wallet-info").innerText = "Connected: " + walletAddress;
+    });
+
+    document.getElementById("submit").addEventListener("click", () => {
+      const twitter = document.getElementById("twitter").value.trim();
+      const category = document.getElementById("category").value;
+      const title = document.getElementById("title").value.trim();
+      const desc = document.getElementById("description").value.trim();
+
+      if (!twitter || !category || !title || !desc) {
+        alert("Please fill all fields");
+        return;
+      }
+
+      const suggestion = {
+        id: Date.now().toString(),
+        twitter, category, title, description: desc,
+        submitter: walletAddress || "Anonymous",
+        timestamp: Date.now(),
+        votes: 0,
+        status: "pending", // pending or validated
+        expiry: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 days
+      };
+
+      const suggestions = JSON.parse(localStorage.getItem("suggestions") || "[]");
+      suggestions.push(suggestion);
+      localStorage.setItem("suggestions", JSON.stringify(suggestions));
+      displaySuggestions();
+      confetti();
+      alert("Suggestion submitted successfully!");
+      
+      document.getElementById("twitter").value = "";
+      document.getElementById("category").value = "";
+      document.getElementById("title").value = "";
+      document.getElementById("description").value = "";
+    });
+
+    function voteSuggestion(id) {
+      let suggestions = JSON.parse(localStorage.getItem("suggestions") || "[]");
+      let suggestion = suggestions.find(s => s.id === id);
+      if (suggestion) {
+        suggestion.votes += 1;
+        if (suggestion.votes >= 20 && suggestion.status === "pending") {
+          suggestion.status = "validated";
+          suggestion.expiry = Date.now() + (4 * 24 * 60 * 60 * 1000); // 4 days
+          confetti();
+          alert(`🎉 "${suggestion.title}" has been validated!`);
+        }
+        localStorage.setItem("suggestions", JSON.stringify(suggestions));
+        displaySuggestions();
+      }
+    }
+
+    function displaySuggestions() {
+      let suggestions = JSON.parse(localStorage.getItem("suggestions") || "[]");
+      const now = Date.now();
+
+      // Filter expired ones
+      suggestions = suggestions.filter(s => s.expiry > now);
+
+      // Save back
+      localStorage.setItem("suggestions", JSON.stringify(suggestions));
+
+      const pendingContainer = document.getElementById("suggestions-list");
+      const validatedContainer = document.getElementById("validated-list");
+      pendingContainer.innerHTML = "";
+      validatedContainer.innerHTML = "";
+
+      suggestions.forEach(s => {
+        const remaining = Math.max(0, s.expiry - now);
+        const days = Math.floor(remaining / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((remaining / (1000 * 60 * 60)) % 24);
+
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <h3>${s.title}</h3>
+          <p>${s.description}</p>
+          <p><b>${s.category}</b> | By ${s.twitter}</p>
+          <p>Votes: ${s.votes}</p>
+          <div class="timer">⏳ ${days}d ${hours}h remaining</div>
+          <button onclick="voteSuggestion('${s.id}')">Vote</button>
+        `;
+
+        if (s.status === "pending") {
+          pendingContainer.appendChild(card);
+        } else {
+          validatedContainer.appendChild(card);
+        }
+      });
+    }
+
+    // Refresh timers every minute
+    setInterval(displaySuggestions, 60000);
+    displaySuggestions();
+  </script>
+</body>
+</html>
