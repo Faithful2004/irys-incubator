@@ -1,256 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title><i><b>IRYS</b></i> Incubator</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title><i><b>IRYS</b></i> Incubator</title>
 
-  <!-- Particles & Confetti -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/particles.js/2.0.0/particles.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<!-- Particles & Confetti -->
+<script src="https://unpkg.com/@irys/web/dist/webIrys.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/particles.js/2.0.0/particles.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-  <!-- Ethers.js (primary + fallback) -->
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-  <script>
-    (function ensureEthersLoaded(){
-      if (window.ethers) return;
-      var s = document.createElement('script');
-      s.src = 'https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js';
-      s.onload = function(){ console.log('Fallback ethers loaded'); };
-      s.onerror = function(){ console.error('Failed to load ethers from both CDNs'); };
-      document.head.appendChild(s);
-    })();
-  </script>
+<!-- Ethers.js -->
+<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
 
-  <!-- Web3Modal (provider picker) + WalletConnect + Coinbase Wallet (UMD builds) -->
-  <link rel="stylesheet" href="https://unpkg.com/web3modal/dist/index.css" />
-  <script src="https://unpkg.com/web3modal/dist/index.js"></script>
-  <script src="https://unpkg.com/@walletconnect/web3-provider/dist/umd/index.min.js"></script>
-  <script src="https://unpkg.com/@coinbase/wallet-sdk/dist/CoinbaseWalletSDK.umd.min.js"></script>
+<!-- Web3Modal + WalletConnect + Coinbase Wallet -->
+<link rel="stylesheet" href="https://unpkg.com/web3modal/dist/index.css" />
+<script src="https://unpkg.com/web3modal/dist/index.js"></script>
+<script src="https://unpkg.com/@walletconnect/web3-provider/dist/umd/index.min.js"></script>
+<script src="https://unpkg.com/@coinbase/wallet-sdk/dist/CoinbaseWalletSDK.umd.min.js"></script>
 
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Oswald:wght@700&display=swap');
+<!-- Irys SDK (UMD) - still included; init code will also dynamically load if needed -->
 
-    :root{
-      --accent: #00fff0;
-      --accent2: #ff4fff;
-      --bg-dark: #111;
-      --card: rgba(0,0,0,0.7);
-      --border: #00fff0;
-      --glow: rgba(0,255,255,0.3);
-    }
 
-    * { box-sizing: border-box; }
+<!-- Firebase (compat simple API for quick integration) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
-    body {
-      margin: 0;
-      padding: 0;
-      background: radial-gradient(circle at top, #001f29, #000);
-      font-family: 'Oswald', sans-serif;
-      color: white;
-      overflow-x: hidden;
-      min-height: 100vh;
-    }
+<style>
+/* Keep your UI/UX (styles adapted from your previous design) */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Oswald:wght@700&display=swap');
+:root{ --accent:#00fff0; --accent2:#ff4fff; --bg-dark:#111; --card:rgba(0,0,0,0.7); --border:#00fff0; --glow:rgba(0,255,255,0.3);}
+*{box-sizing:border-box;}
+body{margin:0;padding:0;background:radial-gradient(circle at top,#001f29,#000);font-family:'Oswald',sans-serif;color:white;overflow-x:hidden;min-height:100vh;}
+#particles-js{position:fixed;width:100%;height:100%;top:0;left:0;z-index:-1;}
+header{ text-align:center; padding:50px 20px; background:rgba(0,0,0,0.5); backdrop-filter:blur(6px); border-bottom:1px solid rgba(255,255,255,0.06);}
+h1{font-family:'Orbitron',sans-serif;font-size:3.5em;margin:0;color:var(--accent);text-shadow:0 0 15px var(--accent),0 0 30px #0ff; animation:pulseGlow 2s infinite alternate;}
+@keyframes pulseGlow{from{text-shadow:0 0 10px var(--accent);} to{text-shadow:0 0 25px #0ff;}}
+#wallet-bar{margin-top:18px;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;}
+.hint{opacity:0.8;font-size:0.9em;}
+main{max-width:1000px;margin:0 auto;padding:30px;}
+section{margin-bottom:60px;}
+h2{font-family:'Orbitron',sans-serif;font-size:2em;text-align:center;margin-bottom:20px;color:var(--accent2);text-shadow:0 0 10px var(--accent2);}
+#submit-section{background:rgba(0,0,0,0.7);padding:40px;border-radius:15px;box-shadow:0 0 20px var(--glow);border:1px solid rgba(0,255,255,0.15);}
+input,textarea,select{display:block;width:100%;margin:15px auto;padding:15px;border:1px solid var(--accent);border-radius:10px;background:var(--bg-dark);color:#fff;font-size:1em;transition:all 0.3s ease;outline:none;appearance:none;}
+select option{background:#000;color:#fff;}
+input:focus,textarea:focus,select:focus{border-color:var(--accent2);box-shadow:0 0 10px var(--accent2);}
+.btn{display:inline-block;margin:10px;padding:10px 20px;background:linear-gradient(45deg,var(--accent),var(--accent2));border:none;border-radius:50px;color:white;font-size:1em;cursor:pointer;font-family:'Orbitron',sans-serif;transition:transform 0.3s ease,box-shadow 0.3s ease;}
+.btn:hover{transform:scale(1.05);box-shadow:0 0 20px var(--accent);}
+.btn.secondary{background:transparent;border:1px solid var(--accent);}
+.card{background:var(--card);border:1px solid var(--border);border-radius:15px;padding:20px;margin:15px 0;transition:0.3s;position:relative;overflow:hidden;}
+.card:hover{transform:translateY(-5px);box-shadow:0 0 20px #0ff;}
+.timer{color:var(--accent2);font-size:0.9em;margin-top:5px;}
+.pill{display:inline-block;padding:6px 10px;border-radius:20px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);font-size:.85em;margin-right:8px;}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:10px;}
+.vote-btn{padding:8px 16px;border-radius:30px;border:1px solid var(--accent2);background:transparent;color:#fff;cursor:pointer;font-family:'Orbitron',sans-serif;transition:.2s ease;}
+.vote-btn:hover{box-shadow:0 0 14px var(--accent2);transform:translateY(-1px);}
+.vote-btn[disabled]{opacity:.45;cursor:not-allowed;}
+.upload-btn{padding:8px 12px;border-radius:12px;background:linear-gradient(45deg,#ffd76b,#ff7bbd);border:none;color:#000;font-weight:700;cursor:pointer;}
+.upload-btn[disabled]{opacity:.5;cursor:not-allowed;}
+.view-btn{padding:8px 12px;border-radius:12px;background:transparent;border:1px solid #ffd76b;color:#ffd76b;cursor:pointer;}
+.cohort-badge{position:absolute;top:14px;right:14px;background:linear-gradient(45deg,#ffd76b,#ff7bbd);padding:6px 10px;border-radius:12px;color:#000;font-weight:700;}
+.boosted-pill{display:inline-block;padding:6px 10px;border-radius:12px;background:#ffd76b;color:#000;font-weight:700;margin-left:8px;}
+footer{text-align:center;padding:20px;font-size:0.9em;background:rgba(0,0,0,0.8);border-top:1px solid #222;}
+footer a{color:var(--accent);text-decoration:none;}
+footer a:hover{color:var(--accent2);}
 
-    /* Particle background */
-    #particles-js {
-      position: fixed;
-      width: 100%;
-      height: 100%;
-      top: 0; left: 0;
-      z-index: -1;
-    }
-
-    header {
-      text-align: center;
-      padding: 50px 20px;
-      background: rgba(0, 0, 0, 0.5);
-      backdrop-filter: blur(6px);
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-    }
-
-    h1 {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 3.5em;
-      margin: 0;
-      color: var(--accent);
-      text-shadow: 0 0 15px var(--accent), 0 0 30px #0ff;
-      animation: pulseGlow 2s infinite alternate;
-    }
-
-    @keyframes pulseGlow {
-      from { text-shadow: 0 0 10px var(--accent); }
-      to   { text-shadow: 0 0 25px #0ff; }
-    }
-
-    #wallet-bar {
-      margin-top: 18px;
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .hint {
-      opacity: 0.8;
-      font-size: 0.9em;
-    }
-
-    main {
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 30px;
-    }
-
-    section {
-      margin-bottom: 60px;
-    }
-
-    h2 {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 2em;
-      text-align: center;
-      margin-bottom: 20px;
-      color: var(--accent2);
-      text-shadow: 0 0 10px var(--accent2);
-    }
-
-    #submit-section {
-      background: rgba(0, 0, 0, 0.7);
-      padding: 40px;
-      border-radius: 15px;
-      box-shadow: 0 0 20px var(--glow);
-      border: 1px solid rgba(0,255,255,0.15);
-    }
-
-    input, textarea, select {
-      display: block;
-      width: 100%;
-      margin: 15px auto;
-      padding: 15px;
-      border: 1px solid var(--accent);
-      border-radius: 10px;
-      background: var(--bg-dark);
-      color: #fff;
-      font-size: 1em;
-      transition: all 0.3s ease;
-      outline: none;
-      appearance: none;
-    }
-
-    select option {
-      background: #000;
-      color: #fff;
-    }
-
-    input:focus, textarea:focus, select:focus {
-      border-color: var(--accent2);
-      box-shadow: 0 0 10px var(--accent2);
-    }
-
-    .btn {
-      display: inline-block;
-      margin: 10px;
-      padding: 10px 20px;
-      background: linear-gradient(45deg, var(--accent), var(--accent2));
-      border: none;
-      border-radius: 50px;
-      color: white;
-      font-size: 1em;
-      cursor: pointer;
-      font-family: 'Orbitron', sans-serif;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .btn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 20px var(--accent);
-    }
-
-    .btn.secondary{
-      background: transparent;
-      border: 1px solid var(--accent);
-    }
-
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 15px;
-      padding: 20px;
-      margin: 15px 0;
-      transition: 0.3s;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 0 20px #0ff;
-    }
-
-    .timer {
-      color: var(--accent2);
-      font-size: 0.9em;
-      margin-top: 5px;
-    }
-
-    .pill {
-      display: inline-block;
-      padding: 6px 10px;
-      border-radius: 20px;
-      border: 1px solid rgba(255,255,255,0.15);
-      background: rgba(255,255,255,0.06);
-      font-size: .85em;
-      margin-right: 8px;
-    }
-
-    .row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 10px;
-    }
-
-    .vote-btn {
-      padding: 8px 16px;
-      border-radius: 30px;
-      border: 1px solid var(--accent2);
-      background: transparent;
-      color: #fff;
-      cursor: pointer;
-      font-family: 'Orbitron', sans-serif;
-      transition: .2s ease;
-    }
-
-    .vote-btn:hover { box-shadow: 0 0 14px var(--accent2); transform: translateY(-1px); }
-    .vote-btn[disabled]{ opacity: .45; cursor: not-allowed; }
-
-    footer {
-      text-align: center;
-      padding: 20px;
-      font-size: 0.9em;
-      background: rgba(0,0,0,0.8);
-      border-top: 1px solid #222;
-    }
-
-    footer a {
-      color: var(--accent);
-      text-decoration: none;
-    }
-    footer a:hover {
-      color: var(--accent2);
-    }
-  </style>
+/* Modal for viewing uploaded data */
+#uploadModal { position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:2000; }
+#uploadModal .backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.6); }
+#uploadModal .panel { position:relative; width:90%; max-width:800px; max-height:80vh; overflow:auto; background:#061219; border-radius:12px; padding:16px; border:1px solid rgba(255,255,255,0.06);}
+#uploadModal pre { white-space:pre-wrap; word-break:break-word; color:#ddd; font-family:monospace; font-size:13px; }
+#uploadModal .close { position:absolute; right:10px; top:8px; background:transparent; border:1px solid #444; color:#fff; padding:6px 10px; border-radius:8px; cursor:pointer;}
+</style>
 </head>
 <body>
   <div id="particles-js"></div>
 
   <header>
     <h1><i><b>IRYS</b></i> Incubator</h1>
-
     <div id="wallet-bar">
       <button id="connect-wallet" class="btn">Connect Wallet</button>
       <button id="disconnect-wallet" class="btn secondary" style="display:none;">Disconnect</button>
@@ -262,26 +89,29 @@
   <main>
     <section id="submit-section">
       <h2>Submit Your Project Suggestion</h2>
-      <input type="text" id="twitter" placeholder="@username" required>
-      <select id="category" required>
+      <input id="twitter" type="text" placeholder="@username" />
+      <select id="category">
         <option value="" disabled selected>Select a Category</option>
-        <option value="Consumer Apps">Consumer Apps</option>
-        <option value="DeFi / Fintech">DeFi / Fintech</option>
-        <option value="Gaming">Gaming</option>
-        <option value="AI / Machine Learning">AI / Machine Learning</option>
-        <option value="Healthcare / MedTech">Healthcare / MedTech</option>
-        <option value="Education / EdTech">Education / EdTech</option>
-        <option value="E-commerce / Retail">E-commerce / Retail</option>
-        <option value="Social / Networking">Social / Networking</option>
-        <option value="Productivity / Utility">Productivity / Utility</option>
-        <option value="Entertainment / Media">Entertainment / Media</option>
-        <option value="IoT / Smart Devices">IoT / Smart Devices</option>
-        <option value="Environment / Sustainability">Environment / Sustainability</option>
-        <option value="Security / Privacy">Security / Privacy</option>
+        <option>Consumer Apps</option>
+        <option>DeFi / Fintech</option>
+        <option>Gaming</option>
+        <option>AI / Machine Learning</option>
+        <option>Healthcare / MedTech</option>
+        <option>Education / EdTech</option>
+        <option>E-commerce / Retail</option>
+        <option>Social / Networking</option>
+        <option>Productivity / Utility</option>
+        <option>Entertainment / Media</option>
+        <option>IoT / Smart Devices</option>
+        <option>Environment / Sustainability</option>
+        <option>Security / Privacy</option>
       </select>
-      <input type="text" id="title" placeholder="Project Title" required>
-      <textarea id="description" placeholder="Project Description" required></textarea>
-      <button id="submit" class="btn">Submit</button>
+      <input id="title" type="text" placeholder="Project Title" />
+      <textarea id="description" placeholder="Project Description"></textarea>
+      <div style="text-align:center;">
+        <button id="submit" class="btn">Submit (Free)</button>
+        <button id="submit-boost" class="btn secondary">Submit with Boost (Sepolia)</button>
+      </div>
     </section>
 
     <section>
@@ -290,327 +120,613 @@
     </section>
 
     <section>
-      <h2>Community Validated Suggestions</h2>
+      <h2>Community Validated Suggestions (Top 5 Cohort)</h2>
       <div id="validated-list"></div>
     </section>
   </main>
 
+  <!-- Modal to view uploaded payload -->
+  <div id="uploadModal" role="dialog" aria-modal="true">
+    <div class="backdrop" onclick="closeUploadModal()"></div>
+    <div class="panel">
+      <button class="close" onclick="closeUploadModal()">Close</button>
+      <h3 style="margin-top:0">Uploaded Data</h3>
+      <div id="uploadInfo" style="color:#fff;margin-bottom:10px"></div>
+      <pre id="uploadJson"></pre>
+    </div>
+  </div>
+
   <footer>Developed by <a href="https://x.com/boyykennn">Kennboyyy</a></footer>
 
-  <script>
-    /* ===================== Background particles ===================== */
-    particlesJS("particles-js", {
-      particles: {
-        number: { value: 120 },
-        color: { value: "#00fff0" },
-        shape: { type: "circle" },
-        opacity: { value: 0.4 },
-        size: { value: 3 },
-        line_linked: { enable: true, color: "#ff4fff" },
-        move: { enable: true, speed: 1 }
-      }
-    });
+<script>
+/* ===================== Setup / Config ===================== */
 
-    /* ===================== Utils ===================== */
-    function shortAddr(addr){ return addr ? addr.slice(0,6) + "..." + addr.slice(-4) : ""; }
+// FIREBASE config (your existing config)
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyD_nECH21fZ_zEsYNgy6xtTJfZUheqh0jY",
+  authDomain: "irys-game.firebaseapp.com",
+  projectId: "irys-game",
+  storageBucket: "irys-game.firebasestorage.app",
+  messagingSenderId: "287457666301",
+  appId: "1:287457666301:web:319384e71342f9945d8a94"
+};
 
-    /* ===================== Web3Modal setup (multiple wallets) ===================== */
-    // If you have your own RPCs, replace below. These are public endpoints for Mainnet.
-    const RPC_MAP = {
-      1: "https://cloudflare-eth.com"
-    };
+// BOOST contract address (you provided)
+const BOOST_CONTRACT_ADDRESS = "0x796361cFeC6471A5B3cFc938F0446014447BD6ef";
 
-    // Replace with your Infura/Alchemy key if available (better reliability)
-    const INFURA_ID = ""; // optional
+// ABI: NON-payable boost (matches your original working contract)
+const BOOST_CONTRACT_ABI = [
+  "event SuggestionBoosted(address indexed booster, uint256 indexed suggestionId, string suggestion)",
+  "function boost(uint256 suggestionId, string suggestion) external"
+];
 
-    let web3Modal = null;
-    let externalProvider = null;        // raw provider returned by web3modal
-    let ethersProvider = null;          // ethers.js provider
-    let signer = null;
-    let walletAddress = null;
+// Sepolia chain id and hex
+const SEPOLIA_CHAIN_ID_DEC = 11155111;
+const SEPOLIA_CHAIN_ID_HEX = "0xaa36a7";
 
+// Irys config (node / dynamic UMD)
+const IRYS_NODE_URL = "https://node1.irys.xyz";
+const IRYS_UMD_URL = "https://unpkg.com/@irys/sdk/dist/irys.umd.min.js";
+
+/* ===================== Initialize Firebase (compat) ===================== */
+if (!window.firebase || !window.firebase.apps) {
+  console.error("Firebase SDK not loaded.");
+}
+firebase.initializeApp(FIREBASE_CONFIG);
+const db = firebase.firestore();
+const suggestionsCol = db.collection("suggestions");
+
+/* ===================== Particles ===================== */
+particlesJS("particles-js", {
+  particles: { number:{value:120}, color:{value:"#00fff0"}, shape:{type:"circle"}, opacity:{value:0.4}, size:{value:3}, line_linked:{enable:true,color:"#ff4fff"}, move:{enable:true,speed:1} }
+});
+
+/* ===================== Small helpers ===================== */
+function shortAddr(addr){ return addr ? addr.slice(0,6)+"..."+addr.slice(-4) : ""; }
+function confettiBurst(){ if (window.confetti) { confetti({ particleCount: 100, spread: 80, origin:{y:0.6}, colors:['#00fff0','#ff4fff','#ffd76b'] }); } }
+
+/* ===================== Wallet & Web3Modal ===================== */
+const RPC_MAP = { 1: "https://cloudflare-eth.com", 11155111: "https://sepolia.infura.io/v3/YOUR_INFURA_KEY_IF_ANY" };
+let web3Modal, externalProvider, ethersProvider, signer, walletAddress;
+
+function initWeb3Modal(){
+  try {
     const providerOptions = {
-      walletconnect: {
-        package: window.WalletConnectProvider.default,
-        options: {
-          rpc: RPC_MAP,
-          bridge: "https://bridge.walletconnect.org",
-          qrcode: true
-        }
-      },
-      coinbasewallet: {
-        package: window.CoinbaseWalletSDK,
-        options: {
-          appName: "IRYS Incubator",
-          rpc: RPC_MAP[1],
-          darkMode: true
-        }
-      }
-      // Injected wallets (MetaMask, Brave, Coinbase ext) are handled by Web3Modal automatically.
+      walletconnect: { package: window.WalletConnectProvider ? window.WalletConnectProvider.default : null, options:{ rpc: RPC_MAP, qrcode: true } },
+      coinbasewallet: { package: window.CoinbaseWalletSDK ? window.CoinbaseWalletSDK : null, options:{ appName: "IRYS Incubator", rpc: RPC_MAP[1], darkMode: true } }
     };
+    web3Modal = new window.Web3Modal.default({ cacheProvider:false, providerOptions, disableInjectedProvider:false });
+  } catch(e) { console.error("Web3Modal init error:", e); }
+}
+initWeb3Modal();
 
-    function initWeb3Modal() {
-      try {
-        web3Modal = new window.Web3Modal.default({
-          cacheProvider: false,           // don't auto-connect silently
-          providerOptions,
-          disableInjectedProvider: false  // allow injected (MetaMask etc.)
-        });
-      } catch (e) {
-        console.error("Web3Modal init failed:", e);
-        alert("Failed to initialize wallet modal. Check ad-blockers and refresh.");
-      }
-    }
+const connectBtn = document.getElementById("connect-wallet");
+const disconnectBtn = document.getElementById("disconnect-wallet");
+const walletInfo = document.getElementById("wallet-info");
+connectBtn.addEventListener("click", connectWallet);
+disconnectBtn.addEventListener("click", doDisconnect);
 
-    initWeb3Modal();
+async function connectWallet(){
+  if (!window.ethers) { alert("ethers.js missing"); return; }
+  try {
+    externalProvider = await web3Modal.connect();
+    ethersProvider = new ethers.providers.Web3Provider(externalProvider, "any");
+    signer = ethersProvider.getSigner();
+    walletAddress = await signer.getAddress();
+    walletInfo.textContent = "Connected: " + shortAddr(walletAddress);
+    connectBtn.style.display = "none";
+    disconnectBtn.style.display = "inline-block";
+    setupProviderListeners();
+    localStorage.setItem("lastWallet", walletAddress);
+  } catch (err) {
+    console.error("connectWallet err:", err);
+    const msg = (err && err.message) ? err.message : String(err);
+    if (/User closed modal/i.test(msg)) return;
+    alert("Wallet connection failed: " + msg);
+  }
+}
 
-    /* ===================== Wallet connect / disconnect ===================== */
-    const connectBtn = document.getElementById("connect-wallet");
-    const disconnectBtn = document.getElementById("disconnect-wallet");
-    const walletInfo = document.getElementById("wallet-info");
-
-    async function connectWallet(){
-      // Ensure ethers is loaded
-      if (!window.ethers) {
-        alert("Failed to load ethers.js. Please disable ad-blockers and refresh.");
-        return;
-      }
-      if (!web3Modal) {
-        initWeb3Modal();
-        if (!web3Modal) return;
-      }
-
-      try {
-        // Open modal (user can select MetaMask / Coinbase / WalletConnect)
-        externalProvider = await web3Modal.connect();
-
-        // Wrap with ethers
+function setupProviderListeners(){
+  if (!externalProvider) return;
+  try {
+    if (externalProvider.on) {
+      externalProvider.on("accountsChanged", async (accs) => {
+        if (!accs || accs.length === 0) return doDisconnect();
+        walletAddress = ethers.utils.getAddress(accs[0]);
+        walletInfo.textContent = "Connected: " + shortAddr(walletAddress);
+        signer = ethersProvider.getSigner();
+      });
+      externalProvider.on("chainChanged", async () => {
         ethersProvider = new ethers.providers.Web3Provider(externalProvider, "any");
         signer = ethersProvider.getSigner();
-        walletAddress = await signer.getAddress();
+      });
+      externalProvider.on("disconnect", () => doDisconnect());
+    }
+  } catch(e){ console.warn("listener setup failed", e); }
+}
 
-        walletInfo.textContent = "Connected: " + shortAddr(walletAddress);
-        connectBtn.style.display = "none";
-        disconnectBtn.style.display = "inline-block";
+async function doDisconnect(){
+  try { if (externalProvider && externalProvider.disconnect) await externalProvider.disconnect(); } catch(e){}
+  externalProvider = null; ethersProvider = null; signer = null; walletAddress = null;
+  walletInfo.textContent = "Not connected";
+  connectBtn.style.display = "inline-block";
+  disconnectBtn.style.display = "none";
+  localStorage.removeItem("lastWallet");
+}
 
-        // Clean listeners to avoid duplicates
-        if (externalProvider.removeAllListeners) {
-          try { externalProvider.removeAllListeners("accountsChanged"); } catch(e){}
-          try { externalProvider.removeAllListeners("chainChanged"); } catch(e){}
-          try { externalProvider.removeAllListeners("disconnect"); } catch(e){}
+/* show last wallet hint */
+const last = localStorage.getItem("lastWallet");
+if (last) walletInfo.textContent = "Last: " + shortAddr(last) + " (click Connect)";
+
+/* ===================== Sepolia switching helper ===================== */
+async function ensureSepolia(){
+  if (!externalProvider) { alert("Connect wallet first"); return false; }
+  try {
+    if (ethersProvider) {
+      const net = await ethersProvider.getNetwork();
+      if (net && net.chainId === SEPOLIA_CHAIN_ID_DEC) return true;
+    }
+  } catch(e){}
+  if (!externalProvider.request) { alert("Your provider doesn't support programmatic switching; switch to Sepolia manually and retry."); return false; }
+  try {
+    await externalProvider.request({ method: "wallet_switchEthereumChain", params: [{ chainId: SEPOLIA_CHAIN_ID_HEX }] });
+    ethersProvider = new ethers.providers.Web3Provider(externalProvider, "any");
+    signer = ethersProvider.getSigner();
+    walletAddress = await signer.getAddress();
+    walletInfo.textContent = "Connected: " + shortAddr(walletAddress) + " (Sepolia)";
+    return true;
+  } catch (err) {
+    const msg = err && err.message ? err.message : String(err);
+    if (/user rejected/i.test(msg)) { alert("Please switch to Sepolia and retry."); return false; }
+    // try add chain then switch
+    try {
+      await externalProvider.request({
+        method: "wallet_addEthereumChain",
+        params: [{
+          chainId: SEPOLIA_CHAIN_ID_HEX,
+          chainName: "Sepolia Testnet",
+          nativeCurrency: { name: "SepoliaETH", symbol: "SEP", decimals: 18 },
+          rpcUrls: ['https://sepolia.infura.io/v3/YOUR_INFURA_KEY_IF_ANY'],
+          blockExplorerUrls: ['https://sepolia.etherscan.io']
+        }]
+      });
+      await externalProvider.request({ method: "wallet_switchEthereumChain", params: [{ chainId: SEPOLIA_CHAIN_ID_HEX }] });
+      ethersProvider = new ethers.providers.Web3Provider(externalProvider, "any");
+      signer = ethersProvider.getSigner();
+      walletAddress = await signer.getAddress();
+      walletInfo.textContent = "Connected: " + shortAddr(walletAddress) + " (Sepolia)";
+      return true;
+    } catch(addErr) {
+      console.error("add/switch failed", addErr);
+      alert("Please switch to Sepolia network in your wallet and retry.");
+      return false;
+    }
+  }
+}
+
+/* ===================== Submit flows ===================== */
+document.getElementById("submit").addEventListener("click", () => submitSuggestion(false));
+document.getElementById("submit-boost").addEventListener("click", () => submitSuggestion(true));
+
+async function createSuggestionDoc(suggestionObj){
+  const docRef = await suggestionsCol.add(suggestionObj);
+  return docRef;
+}
+
+async function submitSuggestion(stake=false){
+  const twitter = document.getElementById("twitter").value.trim();
+  const category = document.getElementById("category").value;
+  const title = document.getElementById("title").value.trim();
+  const description = document.getElementById("description").value.trim();
+  if (!twitter || !category || !title || !description) { alert("Please fill all fields"); return; }
+
+  const suggestionObj = {
+    twitter, category, title, description,
+    submitter: walletAddress || "Anonymous",
+    timestamp: Date.now(),
+    votes: 0, voters: [],
+    boosted: false, txHash: null,
+    uploaded: false, irysTxId: null, irysUrl: null, boostId: null, uploading:false, uploadBackup:false, uploadBackupPayload:null
+  };
+
+  try {
+    const docRef = await createSuggestionDoc(suggestionObj);
+    const docId = docRef.id;
+
+    if (stake) {
+      if (!signer) { alert("Connect wallet to submit with boost."); return; }
+      if (!BOOST_CONTRACT_ADDRESS) { alert("Boost contract address not configured."); return; }
+
+      const ok = await ensureSepolia();
+      if (!ok) {
+        await docRef.update({ submitter: walletAddress || "Anonymous" });
+        alert("Saved as unboosted. Switch wallet to Sepolia and retry Boost if desired.");
+        return;
+      }
+
+      const boostId = Math.floor(Date.now() / 1000);
+      try {
+        const contract = new ethers.Contract(BOOST_CONTRACT_ADDRESS, BOOST_CONTRACT_ABI, signer);
+        if (typeof contract.boost !== 'function') {
+          throw new Error("Target contract does not expose boost(uint256,string). Check address/ABI.");
         }
 
-        // Re-bind listeners
-        if (externalProvider.on) {
-          externalProvider.on("accountsChanged", async (accs) => {
-            if (!accs || accs.length === 0) {
-              doDisconnect();
-            } else {
-              walletAddress = ethers.utils.getAddress(accs[0]);
-              walletInfo.textContent = "Connected: " + shortAddr(walletAddress);
-              // Recreate signer (some providers require it)
-              signer = ethersProvider.getSigner();
-            }
-          });
-
-          externalProvider.on("chainChanged", async (_chainId) => {
-            // Recreate provider & signer on chain change (ethers best-practice)
-            ethersProvider = new ethers.providers.Web3Provider(externalProvider, "any");
-            signer = ethersProvider.getSigner();
-          });
-
-          externalProvider.on("disconnect", (code, reason) => {
-            console.warn("Provider disconnect:", code, reason);
-            doDisconnect();
-          });
-        }
-
-        // Remember last (display hint only)
-        localStorage.setItem("lastWallet", walletAddress);
-        console.log("✅ Connected:", walletAddress);
-
-      } catch (err) {
-        console.error("❌ Wallet connection error:", err);
-        const msg = (err && err.message) ? err.message : String(err);
-        if (/User closed modal|Modal closed/i.test(msg)) {
-          // user just closed the modal—no alert needed
+        // Simulate call to catch revert early
+        try {
+          await contract.callStatic.boost(ethers.BigNumber.from(boostId.toString()), title);
+        } catch(simErr) {
+          console.warn("Boost simulation failed:", simErr);
+          const reason = (simErr && (simErr.error && simErr.error.message)) ? simErr.error.message : (simErr && simErr.message) ? simErr.message : "Simulation failed (contract may revert).";
+          alert("Boost simulation failed: " + reason + "\nSuggestion saved as unboosted.");
           return;
         }
-        if (/User rejected|denied|Rejected by user/i.test(msg)) {
-          alert("You cancelled the connection request.");
-        } else {
-          alert("Wallet connection failed: " + msg);
-        }
+
+        // Send actual tx (no value)
+        const tx = await contract.boost(ethers.BigNumber.from(boostId.toString()), title);
+        const receipt = await tx.wait();
+        await docRef.update({ boosted:true, txHash: tx.hash, boostId });
+        alert("Boost successful! Tx: " + tx.hash);
+      } catch (e) {
+        console.error("Boost transaction failed:", e);
+        let msg = (e && e.message) ? e.message : String(e);
+        if (/insufficient funds/i.test(msg)) msg = "Insufficient funds to pay gas for the boost.";
+        if (/user rejected/i.test(msg)) msg = "You rejected the transaction in your wallet.";
+        alert("Boost transaction failed or was rejected: " + msg + "\nSuggestion saved as unboosted.");
       }
     }
 
-    async function doDisconnect(){
-      try {
-        if (externalProvider && externalProvider.disconnect && typeof externalProvider.disconnect === "function") {
-          // Some providers (WalletConnect) support a proper disconnect
-          await externalProvider.disconnect();
-        }
-      } catch(e) {
-        console.warn("Provider disconnect threw:", e);
-      }
-      externalProvider = null;
-      ethersProvider = null;
-      signer = null;
-      walletAddress = null;
-      walletInfo.textContent = "Not connected";
-      connectBtn.style.display = "inline-block";
-      disconnectBtn.style.display = "none";
-      localStorage.removeItem("lastWallet");
+    confettiBurst();
+    alert("Suggestion submitted!");
+    document.getElementById("twitter").value = "";
+    document.getElementById("category").value = "";
+    document.getElementById("title").value = "";
+    document.getElementById("description").value = "";
+  } catch (e) {
+    console.error("submitSuggestion error:", e);
+    alert("Failed to submit suggestion: " + (e.message || e));
+  }
+}
+
+/* ===================== Voting function ===================== */
+async function voteFirestore(docId){
+  if (!walletAddress || !signer) { alert("Connect wallet to vote"); return; }
+  try {
+    const docRef = suggestionsCol.doc(docId);
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(docRef);
+      if (!snap.exists) throw new Error("Suggestion not found");
+      const data = snap.data();
+      const voters = Array.isArray(data.voters) ? data.voters : [];
+      if (voters.some(a => a.toLowerCase() === walletAddress.toLowerCase())) throw new Error("You already voted for this suggestion");
+      try { await signer.signMessage(`IRYS vote:${docId}:${Date.now()}`); } catch (e) { throw new Error("Signature required to vote (you cancelled)"); }
+      voters.push(walletAddress);
+      tx.update(docRef, { votes: (data.votes || 0) + 1, voters });
+    });
+    confettiBurst();
+  } catch (e) {
+    if (/already voted/i.test(e.message||"")) { alert("You already voted"); return; }
+    alert("Vote failed: " + (e.message || e));
+    console.error("voteFirestore error:", e);
+  }
+}
+window.voteFirestore = voteFirestore;
+
+/* ===================== Irys SDK init & upload (FIXED) ===================== */
+let irysClient = null;
+let irysInitInProgress = false;
+
+async function initIrys(){
+  if (irysClient) return irysClient;
+  if (irysInitInProgress) {
+    return new Promise(resolve => {
+      const t = setInterval(()=>{ if(irysClient){ clearInterval(t); resolve(irysClient); } }, 300);
+      setTimeout(()=>{ clearInterval(t); resolve(irysClient); }, 10000);
+    });
+  }
+  irysInitInProgress = true;
+
+  try {
+    // ✅ Use the correct UMD: window.WebIrys (from @irys/web)
+    if (typeof window.WebIrys !== "function") {
+      console.error("Irys Web SDK (window.WebIrys) not found. Ensure the UMD script is loaded.");
+      return null;
     }
 
-    connectBtn.addEventListener("click", connectWallet);
-    disconnectBtn.addEventListener("click", doDisconnect);
-
-    // Show previously used address hint
-    const last = localStorage.getItem('lastWallet');
-    if (last) {
-      walletInfo.textContent = "Last: " + shortAddr(last) + " (click Connect)";
+    // Prefer your connected Web3Modal provider; fall back to window.ethereum if available
+    let provider = null;
+    if (ethersProvider) {
+      provider = ethersProvider;
+    } else if (window.ethereum) {
+      provider = new ethers.providers.Web3Provider(window.ethereum, "any");
     }
 
-    /* ===================== Suggestion submit ===================== */
-    document.getElementById("submit").addEventListener("click", () => {
-      const twitter = document.getElementById("twitter").value.trim();
-      const category = document.getElementById("category").value;
-      const title = document.getElementById("title").value.trim();
-      const desc = document.getElementById("description").value.trim();
+    // If no provider, we can still try without wallet, but most uploads require a wallet for funding/signing.
+    const walletCfg = provider ? { name: "ethersv5", provider } : null;
 
-      if (!twitter || !category || !title || !desc) {
-        alert("Please fill all fields");
-        return;
-      }
-
-      const suggestion = {
-        id: Date.now().toString(),
-        twitter, category, title, description: desc,
-        submitter: walletAddress || "Anonymous",
-        timestamp: Date.now(),
-        votes: 0,
-        status: "pending", // pending or validated
-        expiry: Date.now() + (7 * 24 * 60 * 60 * 1000), // 7 days
-        voters: [] // wallet addresses that already voted (frontend enforcement)
-      };
-
-      const suggestions = JSON.parse(localStorage.getItem("suggestions") || "[]");
-      suggestions.push(suggestion);
-      localStorage.setItem("suggestions", JSON.stringify(suggestions));
-      displaySuggestions();
-      confetti();
-      alert("Suggestion submitted successfully!");
-
-      document.getElementById("twitter").value = "";
-      document.getElementById("category").value = "";
-      document.getElementById("title").value = "";
-      document.getElementById("description").value = "";
+    const client = new window.WebIrys({
+      url: IRYS_NODE_URL,
+      token: "ethereum",
+      ...(walletCfg ? { wallet: walletCfg } : {})
     });
 
-    /* ===================== Voting: One wallet = one vote (front-end) ===================== */
-    async function voteSuggestion(id) {
-      if (!walletAddress || !signer) {
-        alert("Please connect your wallet to vote.");
-        return;
-      }
+    if (typeof client.ready === "function") {
+      await Promise.race([
+        client.ready(),
+        new Promise((_,reject)=>setTimeout(()=>reject(new Error("Irys client ready timeout")), 12000))
+      ]);
+    }
 
-      let suggestions = JSON.parse(localStorage.getItem("suggestions") || "[]");
-      let suggestion = suggestions.find(s => s.id === id);
-      if (!suggestion) return;
+    irysClient = client;
+    console.log("Irys client ready");
+    return irysClient;
+  } catch (err) {
+    console.error("Irys init failed:", err);
+    irysClient = null;
+    return null;
+  } finally {
+    irysInitInProgress = false;
+  }
+}
 
-      const voterList = Array.isArray(suggestion.voters) ? suggestion.voters : [];
-      const hasVoted = voterList.some(addr => addr.toLowerCase() === walletAddress.toLowerCase());
-      if (hasVoted) {
-        alert("You have already voted on this suggestion with this wallet.");
-        return;
-      }
+/**
+ * uploadSuggestionToIrys(docId, btnEl)
+ * - FIXED: uses finally to always clear uploading flag and re-enable button
+ * - Keeps your Firestore backup fallback
+ */
+async function uploadSuggestionToIrys(docId, btnEl){
+  const docRef = suggestionsCol.doc(docId);
 
-      // Ask user to sign a message (gasless) – proves control of wallet (optional but good UX)
+  try {
+    // mark uploading true
+    await docRef.update({ uploading: true });
+
+    // get doc snapshot
+    const snap = await docRef.get();
+    if (!snap.exists) { alert("Suggestion not found"); return; }
+    const s = snap.data();
+    if (s.uploaded) { alert("Already uploaded to Irys"); return; }
+
+    // prepare payload
+    const payload = {
+      id: docId,
+      title: s.title,
+      description: s.description,
+      category: s.category,
+      twitter: s.twitter,
+      submitter: s.submitter,
+      timestamp: s.timestamp,
+      votes: s.votes,
+      boosted: !!s.boosted,
+      boostId: s.boostId || null
+    };
+
+    // Button UX: show Uploading…
+    if (btnEl) {
+      btnEl.disabled = true;
+      btnEl.textContent = "Uploading...";
+      btnEl.classList.add("uploading");
+    }
+
+    // ensure client available
+    const client = await initIrys();
+
+    if (!client || typeof client.upload !== 'function') {
+      console.warn("Irys SDK not usable; saving backup to Firestore.");
+      await docRef.update({ uploaded:true, uploadBackup:true, uploadBackupPayload: payload, irysTxId: null, irysUrl: null });
+      alert("Irys SDK unavailable — upload saved as Firestore backup.");
+      confettiBurst();
+      return;
+    }
+
+    // Attempt upload (with 3 retries)
+    const maxAttempts = 3;
+    let attempt = 0;
+    let receipt = null;
+    let lastErr = null;
+
+    while (attempt < maxAttempts) {
+      attempt++;
       try {
-        const message =
-`IRYS Incubator Vote
-Suggestion: ${suggestion.title}
-ID: ${suggestion.id}
-Voter: ${walletAddress}
-Time: ${new Date().toISOString()}`;
-        await signer.signMessage(message);
-      } catch (e) {
-        console.warn("Message signing cancelled or failed:", e);
-        alert("Vote cancelled.");
-        return;
+        const data = JSON.stringify(payload);
+        const tags = [
+          { name: 'App-Name', value: 'IRYS-Incubator' },
+          { name: 'Type', value: 'Suggestion' },
+          { name: 'Category', value: s.category || 'Uncategorized' }
+        ];
+        receipt = await client.upload(data, { tags });
+        break;
+      } catch (err) {
+        lastErr = err;
+        console.warn(`Irys upload attempt ${attempt} failed:`, err);
+        await new Promise(r => setTimeout(r, 800 * attempt));
       }
-
-      suggestion.votes += 1;
-      voterList.push(walletAddress);
-      suggestion.voters = voterList;
-
-      if (suggestion.votes >= 20 && suggestion.status === "pending") {
-        suggestion.status = "validated";
-        suggestion.expiry = Date.now() + (4 * 24 * 60 * 60 * 1000); // 4 days
-        confetti();
-        alert(`🎉 "${suggestion.title}" has been validated!`);
-      }
-
-      localStorage.setItem("suggestions", JSON.stringify(suggestions));
-      displaySuggestions();
     }
 
-    /* ===================== Render / timers ===================== */
-    function displaySuggestions() {
-      let suggestions = JSON.parse(localStorage.getItem("suggestions") || "[]");
-      const now = Date.now();
-
-      // Filter out expired suggestions
-      suggestions = suggestions.filter(s => s.expiry > now);
-
-      // Save back (cleanup)
-      localStorage.setItem("suggestions", JSON.stringify(suggestions));
-
-      const pendingContainer = document.getElementById("suggestions-list");
-      const validatedContainer = document.getElementById("validated-list");
-      pendingContainer.innerHTML = "";
-      validatedContainer.innerHTML = "";
-
-      // Sort by votes desc
-      suggestions.sort((a,b) => (b.votes||0) - (a.votes||0));
-
-      suggestions.forEach(s => {
-        const remaining = Math.max(0, s.expiry - now);
-        const days = Math.floor(remaining / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((remaining / (1000 * 60 * 60)) % 24);
-
-        const alreadyVoted = (Array.isArray(s.voters) ? s.voters : [])
-          .some(addr => walletAddress && addr.toLowerCase() === walletAddress.toLowerCase());
-
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
-          <h3>${s.title}</h3>
-          <p>${s.description}</p>
-          <p><span class="pill">${s.category}</span> <span class="pill">By ${s.twitter}</span></p>
-          <div class="row">
-            <div><b>Votes:</b> ${s.votes}</div>
-            <div class="timer">⏳ ${days}d ${hours}h remaining</div>
-          </div>
-          <div class="row" style="margin-top:14px;">
-            <button class="vote-btn" ${alreadyVoted ? 'disabled' : ''} onclick="voteSuggestion('${s.id}')">
-              ${alreadyVoted ? 'Voted' : 'Vote'}
-            </button>
-          </div>
-        `;
-
-        if (s.status === "pending") {
-          pendingContainer.appendChild(card);
-        } else {
-          validatedContainer.appendChild(card);
-        }
-      });
+    if (!receipt) {
+      console.error("All Irys upload attempts failed:", lastErr);
+      await docRef.update({ uploaded:true, uploadBackup:true, uploadBackupPayload: payload, irysTxId: null, irysUrl: null });
+      alert("Irys upload failed after retries — payload saved to Firestore as backup.");
+      confettiBurst();
+      return;
     }
 
-    // Refresh timers every minute
-    setInterval(displaySuggestions, 60000);
-    displaySuggestions();
-  </script>
+    // TX id extraction
+    const txId = receipt?.id || receipt?.txId || receipt?.transactionId || receipt?.tx || receipt?.hash || null;
+    const arweaveUrl = txId ? `https://arweave.net/${txId}` : null;
+    const irysGatewayUrl = txId ? `https://irys.xyz/tx/${txId}` : null;
+
+    await docRef.update({
+      uploaded: true,
+      irysTxId: txId,
+      irysUrl: arweaveUrl || irysGatewayUrl || null,
+      uploadBackup: false,
+      uploadBackupPayload: null
+    });
+
+    alert("Uploaded to Irys/Arweave! TX ID: " + (txId || 'n/a'));
+    confettiBurst();
+  } catch (e) {
+    console.error("uploadSuggestionToIrys unexpected error:", e);
+    try {
+      // Store as backup to avoid losing data
+      const snap = await docRef.get();
+      if (snap.exists) {
+        const d = snap.data();
+        const payload = {
+          id: docRef.id,
+          title: d.title, description: d.description,
+          category: d.category, twitter: d.twitter, submitter: d.submitter,
+          timestamp: d.timestamp, votes: d.votes, boosted: d.boosted, boostId: d.boostId
+        };
+        await docRef.update({ uploaded:true, uploadBackup:true, uploadBackupPayload: payload, irysTxId: null, irysUrl: null });
+      }
+    } catch(_) {}
+    alert("Upload failed. Stored a Firestore backup for safety. Check console for details.");
+  } finally {
+    // ✅ ALWAYS clear uploading and restore button state
+    try { await docRef.update({ uploading:false }); } catch(_){}
+    if (btnEl) {
+      btnEl.disabled = false;
+      btnEl.textContent = "Upload to Irys";
+      btnEl.classList.remove("uploading");
+    }
+  }
+}
+window.uploadSuggestionToIrys = uploadSuggestionToIrys;
+
+/* Modal view for uploaded data */
+function openUploadModal(docId){
+  suggestionsCol.doc(docId).get().then(snap => {
+    if (!snap.exists) { alert("Not found"); return; }
+    const data = snap.data();
+    const uploadInfoEl = document.getElementById("uploadInfo");
+    const uploadJsonEl = document.getElementById("uploadJson");
+    uploadInfoEl.innerHTML = '';
+    if (data.irysTxId) {
+      const arweave = data.irysUrl || `https://arweave.net/${data.irysTxId}`;
+      uploadInfoEl.innerHTML = `<b>Irys TX ID:</b> ${escapeHtml(data.irysTxId)} &nbsp; <a target="_blank" rel="noreferrer noopener" href="${escapeHtml(arweave)}">view on arweave</a>`;
+    } else if (data.uploadBackup) {
+      uploadInfoEl.innerHTML = `<b>Upload stored as Firestore backup</b>`;
+    } else {
+      uploadInfoEl.innerHTML = `<b>No uploaded data available</b>`;
+    }
+    const payload = data.uploadBackupPayload || {
+      id: snap.id, title: data.title, description: data.description,
+      category: data.category, twitter: data.twitter, submitter: data.submitter,
+      timestamp: data.timestamp, votes: data.votes, boosted: data.boosted, boostId: data.boostId
+    };
+    uploadJsonEl.textContent = JSON.stringify(payload, null, 2);
+    document.getElementById("uploadModal").style.display = "flex";
+  }).catch(err => { console.error("openUploadModal error", err); alert("Failed to load upload data"); });
+}
+function closeUploadModal(){ document.getElementById("uploadModal").style.display = "none"; }
+
+/* ===================== Render + Top5 logic (min 2 votes) ===================== */
+const suggestionsList = document.getElementById("suggestions-list");
+const validatedList = document.getElementById("validated-list");
+let currentTop5 = [];
+
+function clearContainers(){ suggestionsList.innerHTML = ""; validatedList.innerHTML = ""; }
+
+function renderCard(docId, data){
+  const card = document.createElement("div");
+  card.className = "card";
+
+  const now = Date.now();
+  const expiryMs = (data.expiry || (data.timestamp + 7*24*60*60*1000));
+  const remaining = Math.max(0, expiryMs - now);
+  const days = Math.floor(remaining/(1000*60*60*24));
+  const hours = Math.floor((remaining/(1000*60*60))%24);
+
+  const alreadyVoted = Array.isArray(data.voters) && walletAddress && data.voters.some(a => a.toLowerCase() === walletAddress.toLowerCase());
+  const votes = data.votes || 0;
+  const isTop5 = currentTop5.includes(docId);
+  const isBoosted = !!data.boosted;
+
+  if (isTop5) {
+    const badge = document.createElement('div');
+    badge.className = 'cohort-badge';
+    badge.innerText = 'Top 5';
+    card.appendChild(badge);
+  }
+
+  let inner = `<h3>${escapeHtml(data.title || "(no title)")}</h3>`;
+  inner += `<p>${escapeHtml(data.description || "")}</p>`;
+  inner += `<p><span class="pill">${escapeHtml(data.category || "")}</span> <span class="pill">By ${escapeHtml(data.twitter || "")}</span>`;
+  if (isBoosted) inner += `<span class="boosted-pill">BOOSTED</span>`;
+  inner += `</p>`;
+  inner += `<div class="row"><div><b>Votes:</b> ${votes}</div><div class="timer">⏳ ${days}d ${hours}h remaining</div></div>`;
+  card.innerHTML += inner;
+
+  const actions = document.createElement('div'); actions.className = 'row'; actions.style.marginTop = '14px';
+  const voteBtn = document.createElement('button'); voteBtn.className = 'vote-btn'; voteBtn.disabled = alreadyVoted; voteBtn.innerText = alreadyVoted ? 'Voted' : 'Vote';
+  voteBtn.onclick = () => voteFirestore(docId);
+  actions.appendChild(voteBtn);
+
+  // Upload button should appear when: top5 (>=2 votes) OR boosted
+  const showUpload = (isTop5 || isBoosted);
+  if (showUpload) {
+    if (data.uploaded) {
+      const uploadedSpan = document.createElement('span'); uploadedSpan.style.marginLeft='10px'; uploadedSpan.style.color='#ffd76b'; uploadedSpan.innerText='✅ Uploaded to Irys';
+      actions.appendChild(uploadedSpan);
+      // view button
+      const viewBtn = document.createElement('button'); viewBtn.className='view-btn'; viewBtn.innerText='View Upload'; viewBtn.onclick = () => openUploadModal(docId);
+      actions.appendChild(viewBtn);
+    } else {
+      const uploadBtn = document.createElement('button'); uploadBtn.className='upload-btn'; uploadBtn.innerText='Upload to Irys';
+      // 🔧 pass the button element so we can show "Uploading..." and disable it safely
+      uploadBtn.onclick = (e) => uploadSuggestionToIrys(docId, e.currentTarget);
+      if (data.uploading) { uploadBtn.disabled = true; uploadBtn.innerText = "Uploading..."; }
+      actions.appendChild(uploadBtn);
+    }
+  }
+
+  if (data.boosted && data.txHash) {
+    const link = document.createElement('a');
+    link.href = `https://sepolia.etherscan.io/tx/${data.txHash}`;
+    link.target = "_blank";
+    link.style.display = "block";
+    link.style.marginTop = "10px";
+    link.style.color = "#ffd76b";
+    link.innerText = "🌟 Boosted (on-chain)";
+    card.appendChild(link);
+  }
+
+  card.appendChild(actions);
+  return card;
+}
+
+function escapeHtml(text){
+  if (!text && text !== 0) return '';
+  return String(text).replace(/[&<>"'`=\/]/g, function (s) {
+    return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '/': '&#x2F;', '`': '&#x60;', '=': '&#x3D;' })[s];
+  });
+}
+
+let unsubscribe = null;
+function startRealtimeListener(){
+  if (unsubscribe) unsubscribe();
+  unsubscribe = suggestionsCol.onSnapshot(snapshot => {
+    const docs = [];
+    snapshot.forEach(d => docs.push({ id: d.id, data: d.data() }));
+    docs.sort((a,b) => (b.data.votes || 0) - (a.data.votes || 0));
+    // top5 selection requires >= 2 votes
+    const eligible = docs.filter(d => (d.data.votes || 0) >= 2);
+    currentTop5 = eligible.slice(0,5).map(d => d.id);
+    clearContainers();
+    docs.forEach(d => {
+      const card = renderCard(d.id, d.data);
+      if (currentTop5.includes(d.id)) validatedList.appendChild(card); else suggestionsList.appendChild(card);
+    });
+  }, err => { console.error("Realtime listener error:", err); });
+}
+startRealtimeListener();
+
+/* ===================== On load actions ===================== */
+window.addEventListener('load', () => {
+  initIrys();
+  initWeb3Modal();
+});
+</script>
 </body>
 </html>
